@@ -7,32 +7,72 @@
 
 //#define DEBUG 
 
-#define LMSNR
-
 
 int main(int argc, char *argv[]) {
+    char * endptr = NULL;
+    char * gainStr = getenv("LMS_GAIN");
+    char * tapsStr = getenv("LMS_TAPS");
+    char * delayStr = getenv("LMS_DELAY");
+    char * leakageStr = getenv("LMS_LEAKAGE");
+    
+    if (gainStr == NULL) {
+        gainStr = "8.0e-5";
+    }
+
+    float gain = strtof(gainStr, &endptr);
+    if (endptr == gainStr) {
+        fprintf(stderr, "cannot parse gain value %s\n", gainStr);
+        return 1;
+    }
+    
+    if (tapsStr == NULL) {
+        tapsStr = "40";
+    }
+    
+    float taps = strtof(tapsStr, &endptr);
+    if (endptr == tapsStr) {
+        fprintf(stderr, "cannot parse taps value %s\n", tapsStr);
+        return 1;
+    }
+    
+    if (delayStr == NULL) {
+        delayStr = "16";
+    }
+    float delay = strtof(delayStr, &endptr);
+    if (endptr == delayStr) {
+        fprintf(stderr, "cannot parse delay value %s\n", delayStr);
+        return 1;
+    }
+    
+    if (leakageStr == NULL) {
+        leakageStr = "1.60e+1";
+    }
+    float leakage = strtof(leakageStr, &endptr);
+    if (endptr == leakageStr) {
+        fprintf(stderr, "cannot parse leakage value %s\n", leakageStr);
+        return 1;
+    }
+    
+
+
     TYPEREAL params[NOISE_PARAMS];
-    params[NR_GAIN] = 8.0e-5 ;
-    params[NR_TAPS] = 40.0;
-    params[NR_DLY] = 16.0;
-    params[NR_LEAKAGE] = 1.60e+1;
+    params[NR_GAIN] = gain;
+    params[NR_TAPS] = taps;
+    params[NR_DLY] = delay;
+    params[NR_LEAKAGE] = leakage;
     int rx_chan = 0;
     wdsp_ANR_init(rx_chan, NR_DENOISE, params);
 
-	int input_samplerate = 48000;
-	int dsp_rate = 48000;
-	int output_samplerate = 48000;
+
 	
 
     int in_size = 12000;
     TYPEMONO16 * const in_buffer_raw = malloc(sizeof(TYPEMONO16) * in_size);
     TYPEMONO16 * const out_buffer_raw = malloc(sizeof(TYPEMONO16) * in_size);
     
-    int error = 0;
     int read_result = 0;
     int amount_read = 0;
     int amount_written = 0;
-    int i = 0;
     int write_result = 0;
     int running = 1;
 
@@ -40,7 +80,7 @@ int main(int argc, char *argv[]) {
     while(running){
         read_result = read(0, ((char*)in_buffer_raw) + amount_read, (sizeof(TYPEMONO16) * in_size) - amount_read);
         if (read_result == 0){
-            running = 0;
+            running = 0; // eof reached
         } else if (read_result < 0) {
             running = 0;
             break;
