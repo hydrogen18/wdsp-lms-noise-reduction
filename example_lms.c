@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 		1 /** do not return until data is available **/);
 
 
-    int16_t * const in_buffer_raw = malloc(sizeof(int16_t) * in_size);
+    int16_t * const in_buffer_raw = malloc(sizeof(int16_t) * in_size * 2);
     double * const in_buffer = malloc(sizeof(double) * in_size * 2);
     double * const out_buffer = malloc(sizeof(double) * in_size * 2);
     
@@ -59,12 +59,12 @@ int main(int argc, char *argv[]) {
 SetRXAShiftRun(channel_index, 0);
 RXANBPSetRun(channel_index, 0);
 SetRXAAMSQRun(channel_index, 0);
-SetRXAAGCMode (channel_index, 2);
-SetRXAMode(channel_index, 1);
+SetRXAAGCMode (channel_index, 0);
+SetRXAMode(channel_index, 2);
 
 
     while(running){
-        read_result = read(0, ((char*)in_buffer_raw) + amount_read, (sizeof(int16_t) * in_size) - amount_read);
+        read_result = read(0, ((char*)in_buffer_raw) + amount_read, (sizeof(int16_t) * in_size *2) - amount_read);
         if (read_result == 0){
             running = 0;
         } else if (read_result < 0) {
@@ -76,15 +76,15 @@ SetRXAMode(channel_index, 1);
         fprintf(stderr, "read %d bytes\n", read_result);
 #endif
         amount_read += read_result;
-        if (amount_read != sizeof(int16_t) * in_size){
+        if (amount_read != sizeof(int16_t) * in_size * 2){
             continue;
         }
         
         amount_read = 0;
         // convert to doubles in I-Q
-        for(i = 0; i != in_size; i++) {
-            in_buffer[i*2] = ((double)in_buffer_raw[i]) / 32768.0;
-            in_buffer[(i*2)+1] = 0.0; // fake I-Q data
+        for(i = 0; i != in_size * 2; i++) {
+            in_buffer[i] = ((double)in_buffer_raw[i]) / 32768.0;
+//            in_buffer[(i*2)+1] = 0.0; // fake I-Q data
         }
         
 
