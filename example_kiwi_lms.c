@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include "ANR.c"
 
-//#define DEBUG 
-
+#define rx_chan 0
+#define in_size 12000
 
 int main(int argc, char *argv[]) {
     char * endptr = NULL;
@@ -52,21 +52,14 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "cannot parse leakage value %s\n", leakageStr);
         return 1;
     }
-    
-
 
     TYPEREAL params[NOISE_PARAMS];
     params[NR_GAIN] = gain;
     params[NR_TAPS] = taps;
     params[NR_DLY] = delay;
     params[NR_LEAKAGE] = leakage;
-    int rx_chan = 0;
     wdsp_ANR_init(rx_chan, NR_DENOISE, params);
-
-
 	
-
-    int in_size = 12000;
     TYPEMONO16 * const in_buffer_raw = malloc(sizeof(TYPEMONO16) * in_size);
     TYPEMONO16 * const out_buffer_raw = malloc(sizeof(TYPEMONO16) * in_size);
     
@@ -75,8 +68,6 @@ int main(int argc, char *argv[]) {
     int amount_written = 0;
     int write_result = 0;
     int running = 1;
-
-
     while(running){
         read_result = read(0, ((char*)in_buffer_raw) + amount_read, (sizeof(TYPEMONO16) * in_size) - amount_read);
         if (read_result == 0){
@@ -95,11 +86,8 @@ int main(int argc, char *argv[]) {
         }
         
         amount_read = 0;        
-        wdsp_ANR_filter(rx_chan, NR_DENOISE, in_size, in_buffer_raw, out_buffer_raw);
-        
-        // should have the same number of samples in the output
-
-        
+        wdsp_ANR_filter(rx_chan, NR_DENOISE, in_size, in_buffer_raw, out_buffer_raw);        
+        // should have the same number of samples in the output        
         amount_written = 0;
         while(amount_written != sizeof(int16_t) * in_size) {
             write_result = write(1, ((char*)out_buffer_raw) + amount_written, (sizeof(int16_t) * in_size) - amount_written);
@@ -110,6 +98,8 @@ int main(int argc, char *argv[]) {
             amount_written += write_result;
         }
     }
+    free(in_buffer_raw);
+    free(out_buffer_raw);
     
 	return 0;
 }

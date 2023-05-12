@@ -10,10 +10,6 @@
 // (c) Frank DD4WH 2020_04_19
 //
 
-//#include "types.h"
-//#include "kiwi.h"
-//#include "rx_noise.h"
-//#include "noise_filter.h"
 #include <math.h>
 #include <string.h>
 
